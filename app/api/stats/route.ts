@@ -1,29 +1,18 @@
 import { NextResponse } from "next/server";
-import { get } from "@vercel/edge-config";
-import { getAll } from "@vercel/edge-config";
-/* export const runtime = "edge";
- */
-async function getStats() {
-  const all = await getAll();
-  console.log("all", all);
-  return (await get("stats")) || {}; // Fetch stats from Edge Config
-}
+import { createClient } from "@vercel/edge-config";
+import { updateEdgeConfig } from "@/queries/update-edge-config";
 
-interface Stats {
-  [userId: string]: {
-    username: string;
-    highScore: number;
-    totalGamesPlayed: number;
-    games: {
-      score: number;
-      attempts: { correct: boolean; hand: string }[];
-    }[];
-  };
+const client = createClient(process.env.EDGE_CONFIG); // Create the Edge Config client
+
+export const runtime = "edge";
+
+async function getStats() {
+  return (await client.get("stats")) || {}; // Fetch stats from Edge Config
 }
 
 export async function GET() {
-  const stats = getStats();
-  console.log("stats", stats);
+  const stats = await getStats();
+
   let totalGamesPlayedArray = [];
   let totalCorrectGuessesArray = [];
   let highScoreArray = [];
@@ -62,7 +51,7 @@ export async function POST(request: Request) {
       attempts: { correct: boolean; hand: string }[];
     };
   };
-  const allStats = getStats();
+  let allStats = await getStats();
   const myStats = allStats[user.id] || {};
 
   const myUpdatedGames = [...(myStats.games || []), stats];
@@ -75,9 +64,22 @@ export async function POST(request: Request) {
     games: myUpdatedGames,
   };
 
-  // await set("stats", stats);
+  // Prepare the payload for Edge Config update
+  const items = [
+    {
+      operation: "upsert", // "upsert" means create or update
+      key: "stats",
+      value: allStats,
+    },
+  ];
 
-  return NextResponse.json({ message: "Stats updated successfully" });
+  // Update Edge Config with the new stats
+  const updateResult = await updateEdgeConfig(items);
+
+  return NextResponse.json({
+    message: "Stats updated successfully",
+    updateResult,
+  });
 }
 
 function getMyHighScore(

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { Fragment, useEffect } from "react";
+import React, { useEffect } from "react";
 import { cn } from "@/lib/classname-utils";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/store/use-user";
@@ -20,7 +20,7 @@ export default function StartGame() {
       return;
     }
 
-    const userId = `${Date.now()}-${username}`;
+    const userId = `${Date.now()}-${Math.random()}`;
     useUser.setState({ id: userId, username });
     router.push("/game");
   }
