@@ -8,15 +8,16 @@ async function getStats() {
 
     if (!response.ok) {
       console.error("Failed to fetch, status:", response.status);
-      return { notFound: true }; // Or handle the error as needed
+
+      return {
+        gamesPlayed: [],
+        correctGuesses: [],
+        highScores: [],
+      };
     }
 
     const data = await response.json();
-
-    // Return the fetched data as props to the page
-    return {
-      props: { stats: data }, // This will be passed to the StatsPage component
-    };
+    return data;
   } catch (error) {
     console.error("Error fetching stats:", error);
     return {
