@@ -3,7 +3,7 @@ import StatsDisplay from "./_components/stats-display";
 export const dynamicParams = false;
 
 async function getStats() {
-  const response = await fetch("http://localhost:3000/api/stats");
+  const response = await fetch(process.env.BASE_URL + "/api/stats");
   const data = await response.json();
   return data;
 }
