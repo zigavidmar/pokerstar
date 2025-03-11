@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-const STATS_FILE = path.join(process.cwd(), "data", "stats.json");
+import { get } from "@vercel/edge-config";
+import { getAll } from "@vercel/edge-config";
+/* export const runtime = "edge";
+ */
+async function getStats() {
+  const all = await getAll();
+  console.log("all", all);
+  return (await get("stats")) || {}; // Fetch stats from Edge Config
+}
 
 interface Stats {
   [userId: string]: {
@@ -16,30 +21,9 @@ interface Stats {
   };
 }
 
-function getStats(): Stats {
-  if (!fs.existsSync(STATS_FILE)) {
-    return {};
-  }
-
-  const data = fs.readFileSync(STATS_FILE, "utf8");
-  return JSON.parse(data);
-}
-
-function saveStats(stats: Stats) {
-  const dir = path.dirname(STATS_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
-}
-
 export async function GET() {
-  // Delete stats file
-  /* fs.unlinkSync(STATS_FILE);
-  return NextResponse.json({ message: "Stats file deleted" });
- */
   const stats = getStats();
-
+  console.log("stats", stats);
   let totalGamesPlayedArray = [];
   let totalCorrectGuessesArray = [];
   let highScoreArray = [];
@@ -90,7 +74,9 @@ export async function POST(request: Request) {
     totalGamesPlayed: myUpdatedGames.length,
     games: myUpdatedGames,
   };
-  saveStats(allStats);
+
+  // await set("stats", stats);
+
   return NextResponse.json({ message: "Stats updated successfully" });
 }
 
