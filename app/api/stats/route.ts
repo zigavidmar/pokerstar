@@ -7,7 +7,13 @@ const client = createClient(process.env.EDGE_CONFIG); // Create the Edge Config 
 export const runtime = "edge";
 
 async function getStats() {
-  return (await client.get("stats")) || {}; // Fetch stats from Edge Config
+  return (
+    (await client.get("stats")) || {
+      gamesPlayed: [],
+      correctGuesses: [],
+      highScores: [],
+    }
+  );
 }
 
 export async function GET() {
@@ -18,6 +24,9 @@ export async function GET() {
   let highScoreArray = [];
 
   for (const [userId, userStats] of Object.entries(stats)) {
+    if (!userStats.games) {
+      continue;
+    }
     const username = userStats.username;
     const totalGamesPlayed = userStats.totalGamesPlayed;
     const highScore = userStats.highScore;
